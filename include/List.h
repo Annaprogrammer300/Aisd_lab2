@@ -229,32 +229,6 @@ public:
         _size--;
     }
 
-    /*Node<T>* operator[](int index) {
-        if (index < 0 || index >= _size) {
-            throw std::out_of_range("In operator[]: index is out of range");
-        }
-
-        Node<T>* head = _head;
-        for (int i = 0; i < index; i++) {
-            head = head->next;
-        }
-
-        return head;
-    }
-
-    Node<T>* operator[](int index) const {
-        if (index < 0 || index >= _size) {
-            throw std::out_of_range("In operator[]: index is out of range");
-        }
-
-        Node<T>* head = _head;
-        for (int i = 0; i < index; i++) {
-            head = head->next;
-        }
-
-        return head;
-    }*/
-
 
     T& operator[](size_t index) {
         if (index >= _size) {
@@ -317,6 +291,7 @@ std::ostream& operator<<(std::ostream& os, const CyclicList<T>& list) {
 
     return os;
 }
+
 
 template<typename T>
 void CyclicList<T>::reverse() {
