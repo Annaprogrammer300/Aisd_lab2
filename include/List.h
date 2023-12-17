@@ -1,4 +1,4 @@
-#ifndef LIST_INCLUDE_LIST_H
+﻿#ifndef LIST_INCLUDE_LIST_H
 #define LIST_INCLUDE_LIST_H
 
 #include <stdexcept>
@@ -104,6 +104,7 @@ public:
             _head = tmp;
         }
         _size++;
+        
     }
 
     void push_tail(T data) {
@@ -133,11 +134,29 @@ public:
             *this = other;
             return;
         }
+        // Создание новых узлов для добавляемого списка
         Node<T>* other_head = other._head;
-        while (other_head) {
-            push_head(other_head->data);
+        Node<T>* new_head = new Node<T>(other_head->data);
+        Node<T>* new_tail = new_head;
+        other_head = other_head->next;
+
+        // Добавление остальных элементов добавляемого списка
+        while (other_head != other._head) {
+            Node<T>* new_node = new Node<T>(other_head->data);
+            new_node->next = new_head;
+            new_node->prev = new_tail;
+            new_tail->next = new_node;
+            new_tail = new_node;
             other_head = other_head->next;
         }
+
+        // Обновление связей текущего списка
+        new_tail->next = _head;
+        _head->prev = new_tail;
+        _head = new_head;
+
+        // Обновление размера списка
+        _size += other.size();
     }
 
     void push_tail(const CyclicList<T>& other) {
@@ -147,44 +166,65 @@ public:
         if (empty()) {
             *this = other;
             return;
-        }
+        } 
+
         Node<T>* other_head = other._head;
-        while (other_head) {
-            push_tail(other_head->data);
+        Node<T>* other_tail = other._tail->prev;
+
+        while (other_head != other._tail) {
+            Node<T>* new_node = new Node<T>(other_head->data);
+            new_node->prev = _tail->prev;
+            new_node->next = _tail;
+            _tail->prev->next = new_node;
+            _tail->prev = new_node;
             other_head = other_head->next;
+            
         }
+
+        // Обновление размера списка
+        _size += other.size();
     }
 
     int get_len() {
-        if (_head == nullptr)
+        if (_size == 0) {
             return 0;
-        int len = 1;
-        Node<T>* node = _head->next;
-        while (node != _head) {
-            len += 1;
-            node = node->next;
+        }
+        size_t len = 1;
+        Node<T>* tmp = _head;
+        while (tmp->next != _head && tmp->next != _tail) {
+            len++;
+            tmp = tmp->next;
         }
         return len;
     }
 
 
     void delete_node(T data) {
-        Node <T>* tmp = _head;
+        Node<T>* tmp = _head;
         int len = this->get_len();
         for (int i = 0; i < len; i++) {
             if (tmp->data == data) {
                 if (tmp == _head)
                 {
+                    //pop_head();
                     this->pop_head();
+                    break;
                 }
                 else if (tmp == _tail)
                 {
+                   // pop_tail();
                     this->pop_tail();
+                    break;
                 }
                 else
                 {
                     tmp->prev->next = tmp->next;
                     tmp->next->prev = tmp->prev;
+                    Node<T>* toDelete = tmp;
+                    tmp = tmp->next;
+                    delete toDelete;
+                    _size--;
+                   
                 }
             }
             tmp = tmp->next;
@@ -192,10 +232,10 @@ public:
     }
 
     void pop_head() {
-        if (_head == nullptr) {
+        if (_head == nullptr ) {
             return;
         }
-        if (_head == _tail) {
+        if (_head == _tail ) {
             delete _head;
             _head = nullptr;
             _tail = nullptr;
@@ -211,13 +251,14 @@ public:
     }
 
     void pop_tail() {
-        if (_tail == nullptr) {
+        if (_size == 0) {
             return;
         }
-        if (_head == _tail) {
+        else if (_size == 1) {
             delete _tail;
             _head = nullptr;
             _tail = nullptr;
+            _size--;
         }
         else {
             Node<T>* new_tail = _tail->prev;
@@ -225,8 +266,8 @@ public:
             _head->prev = new_tail;
             delete _tail;
             _tail = new_tail;
+            _size--;
         }
-        _size--;
     }
 
 
@@ -260,7 +301,7 @@ public:
 
 
     void clear() {
-        while (!empty()) {
+        while (_size > 0) {
             pop_head();
         }
     }
@@ -273,7 +314,16 @@ public:
         return (_size == 0);
     }
 
-    void reverse();
+    Node<T>* set_tail(Node<T>* tail) {
+        _tail = tail;
+        return _tail;
+    }
+
+    Node<T>* set_head(Node<T>* head) {
+        _head = head;
+        return _head;
+    }
+    
 };
 
 template <typename T>
@@ -294,25 +344,26 @@ std::ostream& operator<<(std::ostream& os, const CyclicList<T>& list) {
 
 
 template<typename T>
-void CyclicList<T>::reverse() {
-    if (_head == nullptr || _head == _tail) {
+void reverse(CyclicList<T>& list) {
+    if (list.head() == nullptr || list.head() == list.tail()) {
         return;
     }
 
-    Node<T>* current = _head;
+    Node<T>* current = list.head();
+    Node<T>* next_node = nullptr;
 
     do {
-        Node<T>* temp_next = current->next;
+        Node<T>* temp_prev = current->prev;
 
-        current->next = current->prev;
-        current->prev = temp_next;
+        current->prev = current->next;
+        current->next = temp_prev;
 
-        current = temp_next;
-    } while (current != _head);
+        next_node = current->prev;
+        current = next_node;
+    } while (current != list.head());
 
-
-    Node<T>* temp_head = _head;
-    _head = _tail;
-    _tail = temp_head;
+    Node<T>* temp_head = list.head();
+    list.set_head(list.tail());
+    list.set_tail(temp_head);
 }
 #endif
